@@ -1,9 +1,9 @@
-// memory.cpp — YOUR WORK (Lab 1, M3).
+// memory.cpp — ВАША РОБОТА (Lab 1, M3).
 //
-// Two functions, a few lines each. Both need exactly one `if`: an address is
-// valid when it is smaller than MEM_SIZE. Addresses are counted from 0, so the
-// last valid address is MEM_SIZE - 1, not MEM_SIZE. That off-by-one is the
-// whole subject of Lab 3.
+// Дві функції, по кілька рядків кожна. Обидві потребують рівно одного `if`:
+// адреса вважається дійсною, якщо вона менша за MEM_SIZE. Адреси рахуються з 0,
+// тому остання правильна адреса — MEM_SIZE - 1, а не MEM_SIZE. Цей off-by-one і є
+// предметом всього Lab 3.
 #include "memory.hpp"
 
 Byte mem_get(const Memory& mem, std::size_t addr) {

@@ -1,8 +1,33 @@
-# ember — Lab 01: box of bytes
+# ember
 
-Це перша лабораторна. Тут ми працюємо з байтом, типами, пам'яттю і тим, як один і той самий набір бітів можна прочитати по-різному.
+Це навчальний проект на C++: модель пам'яті, побайтовий дамп, базовий ALU та простий CPU. Проект збирається як консольний застосунок і використовується для лабораторної роботи з представленням даних у пам'яті, бітовими операціями та простим виконанням інструкцій.
 
-## Build
+## Що реалізовано
+
+- Lab 01: робота з `Memory`, адресацією, виведенням байта та дампом пам'яті
+- Lab 02: ALU та CPU з флагами `Z`, `N`, `C` та командним інтерфейсом
+
+## Структура проєкту
+
+```text
+.
+├── CMakeLists.txt
+├── README.md
+├── src/
+│   ├── alu.cpp
+│   ├── alu.hpp
+│   ├── cpu.cpp
+│   ├── cpu.hpp
+│   ├── dump.cpp
+│   ├── dump.hpp
+│   ├── main.cpp
+│   ├── memory.cpp
+│   └── memory.hpp
+├── build/
+└── ...
+```
+
+## Збірка
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
@@ -10,63 +35,86 @@ cmake --build build
 ./build/ember
 ```
 
-## `sizeof` on this machine
+## Команди програми
 
-На цій машині отримані такі розміри типів:
+```text
+help              показати список команд
+set <addr> <val>  записати байт за адресом
+get <addr>        прочитати байт і показати 4 форми виводу
+ dump             вивести дамп пам'яті
+reg <a|b> <val>  встановити регістр A або B
+regs              показати стан CPU та флагів
+step              виконати одну інструкцію
+alu <op> <a> <b>  обчислити операцію ALU
+quit              завершити програму
+```
 
-| Type | `sizeof` (bytes) | Notes |
-|---|---:|---|
-| `char` | 1 | one byte |
-| `bool` | 1 | boolean |
-| `short` | 2 | 16-bit integer |
-| `int` | 4 | usual signed int |
-| `long` | 8 | 64-bit integer |
-| `long long` | 8 | 64-bit integer |
-| `float` | 4 | 32-bit floating point |
-| `double` | 8 | 64-bit floating point |
-| `void*` | 8 | pointer |
-| `std::uint8_t` | 1 | exact 1 byte |
-| `std::uint16_t` | 2 | exact 2 bytes |
-| `std::int32_t` | 4 | exact 4 bytes |
-| `std::uint32_t` | 4 | exact 4 bytes |
-| `std::size_t` | 8 | size/count type |
+## Приклади використання
 
-## Terminal output used in the lab
+### Lab 01: байт і пам'ять
 
 ```txt
 ember> set 0 65
-ember> set 1 66
 ember> get 0
 65  0x41  0b01000001  'A'
+```
+
+```txt
 ember> dump
 0000  41 42 00 00 00 00 00 00 00 00 00 00 00 00 00 00  |AB..............|
 ```
 
-This is the key result for M2/M3:
-- byte `65` is the same memory as `0x41`
-- in binary it is `0b01000001`
-- as a printable character it is `'A'`
-- `dump` shows the memory as a hex view + ASCII column
+### Lab 02: ALU та CPU
 
-## What is implemented here
+```txt
+ember> reg a 200
+ember> reg b 100
+ember> regs
+pc=0 a=200 b=100 z=0 n=0 c=0 halted=0
 
-- `mem_get` reads a byte from `Memory` and rejects invalid addresses
-- `mem_set` writes one byte and returns `false` if the address is out of range
-- `dump` prints the whole 4096-byte memory block in rows of 16 bytes
-- `show_byte` prints a byte four ways: decimal, hex, binary, character
+ember> alu add 200 100
+result=44 z=0 n=0 c=1
+```
 
-## Notes
+## `sizeof` на цій машині
 
-- `Memory` stores `Byte data[MEM_SIZE]{}` and is zero-initialized.
-- Addresses are valid from `0` to `MEM_SIZE - 1`.
-- `get` and `set` must not read or write outside the box.
-- The project is built with `-Wall -Wextra -Werror` and ASan + UBSan in Debug mode.
+| Type | `sizeof` | Коментар |
+|---|---:|---|
+| `char` | 1 | byte |
+| `bool` | 1 | boolean |
+| `short` | 2 | 16-bit |
+| `int` | 4 | signed int |
+| `long` | 8 | 64-bit |
+| `long long` | 8 | 64-bit |
+| `float` | 4 | 32-bit float |
+| `double` | 8 | 64-bit double |
+| `void*` | 8 | pointer |
+| `std::uint8_t` | 1 | exact byte |
+| `std::uint16_t` | 2 | exact 2 bytes |
+| `std::uint32_t` | 4 | exact 4 bytes |
+| `std::size_t` | 8 | size/count type |
 
-## Lab checklist
+## Важливі деталі реалізації
 
-- [x] project builds
-- [x] `dump` works
-- [x] `get` shows four views of the same byte
-- [x] `set` validates address and value
-- [x] README contains `sizeof` table and terminal output
-- [ ] public GitHub repository and tag `lab-01` are created/pushed separately
+- `Memory` зберігає масив `Byte data[MEM_SIZE]{}` і ініціалізується нулями.
+- Адреси валідні від `0` до `MEM_SIZE - 1`.
+- `mem_get` та `mem_set` не дозволяють виходити за межі масиву.
+- `dump` друкує пам'ять рядками по 16 байт.
+- `show_byte` показує одне і те саме значення у 4 формах: число, hex, binary, символ.
+- ALU повертає результат і флаги: `z`, `n`, `c`.
+- CPU зберігає `pc`, регістри `a`/`b`, флаги та стан `halted`.
+
+## Примітки
+
+- Проєкт збирається з `-Wall -Wextra -Werror`.
+- У режимі Debug додані ASan і UBSan.
+- Для навчальної задачі важливо не просто “щоб працювало”, а щоб структура відповідала ідеї пам'ять + ALU + CPU і була зрозумілою в коді.
+
+## Checklist
+
+- [x] проєкт збирається
+- [x] реалізовано `Memory` і `dump`
+- [x] байт виводиться у 4 представленнях
+- [x] алгебраїчні операції ALU працюють
+- [x] CPU виконує прості інструкції
+- [x] README описує збірку та приклади використання

@@ -1,13 +1,13 @@
-// dump.hpp — two ways of looking at bytes.
-// GIVEN.
+// dump.hpp — два способи подивитися на байт.
+// Надано.
 #pragma once
 
 #include "memory.hpp"
 
-// Print the whole box, 16 bytes per line: address, hex, ASCII gutter.
+// Вивести всю коробку, по 16 байт на рядок: адреса, hex, ASCII-стовпець.
 void dump(const Memory& mem);
 
-// Print ONE byte four ways: decimal, hex, binary, character.
-// Example for the byte 65:   65  0x41  0b01000001  'A'
-// TODO(lab-01, M3): implement in dump.cpp.
+// Вивести ОДИН байт чотирма способами: десятковий, hex, двійковий, символ.
+// Приклад для байта 65:   65  0x41  0b01000001  'A'
+// TODO(lab-01, M3): реалізувати в dump.cpp.
 void show_byte(Byte b);
