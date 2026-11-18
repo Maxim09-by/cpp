@@ -38,6 +38,7 @@ static void print_help() {
               << "  regs              показати регістри CPU та флаги\n"
               << "  step              виконати одну інструкцію\n"
               << "  run               виконувати до HALT або помилки\n"
+              << "  find <lo> <hi> <byte>  знайти перше входження байта в пам'яті\n"
               << "  alu <op> <a> [b]  виконати ALU-операцію над байтом або двома байтами\n"
               << "  help              показати цей список\n"
               << "  quit              вийти\n";
@@ -161,10 +162,32 @@ int main() {
             step(cpu);
             dump_regs(cpu);
         } else if (cmd == "run") {
-            for (std::size_t i = 0; i < MEM_SIZE && !cpu.halted; ++i) {
+            const std::size_t STEP_LIMIT = 100000;
+            std::size_t steps = 0;
+            for (; steps < STEP_LIMIT && !cpu.halted; ++steps) {
                 step(cpu);
             }
+            if (!cpu.halted) {
+                std::cout << "step limit reached: " << STEP_LIMIT << '\n';
+            }
             dump_regs(cpu);
+        } else if (cmd == "find") {
+            std::string lo_word, hi_word, byte_word;
+            long lo = 0, hi = 0, needle = 0;
+            if (!(words >> lo_word) || !(words >> hi_word) || !(words >> byte_word) ||
+                !parse_number(lo_word, lo) || !parse_number(hi_word, hi) ||
+                !parse_number(byte_word, needle)) {
+                std::cout << "usage: find <lo> <hi> <byte>\n";
+            } else if (lo < 0 || hi < 0 || lo > static_cast<long>(MEM_SIZE) || hi > static_cast<long>(MEM_SIZE) ||
+                       needle < 0 || needle > 255) {
+                std::cout << "find: lo/hi must be 0.." << MEM_SIZE << ", byte 0..255\n";
+            } else {
+                const std::uint16_t found = mem_find(mem,
+                    static_cast<std::uint16_t>(lo), static_cast<std::uint16_t>(hi),
+                    static_cast<Byte>(needle));
+                if (found == hi) std::cout << "not found\n";
+                else std::cout << "found=" << found << '\n';
+            }
         } else if (cmd == "alu") {
             std::string op, a, b;
             long left = 0, right = 0;

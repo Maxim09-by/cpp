@@ -74,6 +74,7 @@ void step(CPU& cpu) {
             break;
         default:
             std::cout << "unknown opcode: 0x" << std::hex << static_cast<int>(op) << std::dec << '\n';
+            cpu.halted = true;
             break;
         }
         cpu.pc += 1;
@@ -91,8 +92,16 @@ void step(CPU& cpu) {
         case 0x7: apply_alu_result(cpu, alu_shr(cpu.a)); break;
         case 0x8: apply_alu_result(cpu, alu_inc(cpu.a)); break;
         case 0x9: apply_alu_result(cpu, alu_dec(cpu.a)); break;
+        case 0xA: {
+            const AluResult r = alu_sub(cpu.a, cpu.b);
+            cpu.f.z = r.z;
+            cpu.f.n = r.n;
+            cpu.f.c = r.c;
+            break;
+        }
         default:
             std::cout << "unknown opcode: 0x" << std::hex << static_cast<int>(op) << std::dec << '\n';
+            cpu.halted = true;
             break;
         }
         cpu.pc += 1;
@@ -149,16 +158,49 @@ void step(CPU& cpu) {
         case 0xC:
             if (cpu.h == 0) { std::cout << "H address underflow\n"; }
             else --cpu.h; cpu.pc += 1; break;
+        case 0xD:
+            cpu.a = static_cast<Byte>(cpu.h & 0xFFu); cpu.pc += 1; break;
         default:
             std::cout << "unknown opcode: 0x" << std::hex << static_cast<int>(op) << std::dec << '\n';
-            cpu.pc += 1;
+            cpu.halted = true;
+            break;
+        }
+        break;
+
+    case 0x3:
+        switch (subcode) {
+        case 0x0:
+        case 0x1:
+        case 0x2: {
+            Byte lo, hi;
+            if (!pc_read(cpu, 1, lo) || !pc_read(cpu, 2, hi)) {
+                std::cout << "PC outside memory\n";
+                cpu.halted = true;
+                break;
+            }
+            const std::uint16_t addr = static_cast<std::uint16_t>(lo | (static_cast<std::uint16_t>(hi) << 8));
+            if (addr >= MEM_SIZE) {
+                std::cout << "jump address outside memory: " << addr << '\n';
+                cpu.halted = true;
+                break;
+            }
+            const bool should_jump = (subcode == 0x0) ||
+                                     (subcode == 0x1 && cpu.f.z) ||
+                                     (subcode == 0x2 && !cpu.f.z);
+            if (should_jump) cpu.pc = addr;
+            else cpu.pc += 3;
+            break;
+        }
+        default:
+            std::cout << "unknown opcode: 0x" << std::hex << static_cast<int>(op) << std::dec << '\n';
+            cpu.halted = true;
             break;
         }
         break;
 
     default:
         std::cout << "unknown opcode: 0x" << std::hex << static_cast<int>(op) << std::dec << '\n';
-        cpu.pc += 1;
+        cpu.halted = true;
         break;
     }
 }

@@ -32,6 +32,13 @@ const Byte OP_LOAD_A_H = 0x29;
 const Byte OP_STORE_A_H = 0x2A;
 const Byte OP_INCH = 0x2B;
 const Byte OP_DECH = 0x2C;
+const Byte OP_HLOW = 0x2D;
+
+const Byte OP_CMP = 0x1A;
+
+const Byte OP_JMP = 0x30;
+const Byte OP_JZ  = 0x31;
+const Byte OP_JNZ = 0x32;
 
 struct Flags {
     bool z = false;
