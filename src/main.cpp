@@ -34,10 +34,11 @@ static void print_help() {
               << "  dump              вивести всі " << MEM_SIZE << " байтів\n"
               << "  get <addr>        показати один байт у 4 формах\n"
               << "  set <addr> <val>  записати один байт (dec або 0x hex)\n"
-              << "  reg <a|b> <val>   встановити регістр A або B CPU\n"
+              << "  reg <a|b|h|pc> <val> встановити регістр CPU\n"
               << "  regs              показати регістри CPU та флаги\n"
               << "  step              виконати одну інструкцію\n"
-              << "  alu <op> <a> <b>  виконати ALU-операцію над двома байтами\n"
+              << "  run               виконувати до HALT або помилки\n"
+              << "  alu <op> <a> [b]  виконати ALU-операцію над байтом або двома байтами\n"
               << "  help              показати цей список\n"
               << "  quit              вийти\n";
 }
@@ -135,12 +136,22 @@ int main() {
         } else if (cmd == "reg") {
             std::string r, v;
             long value = 0;
-            if (!(words >> r) || !(words >> v) || !parse_number(v, value) || value < 0 || value > 255) {
-                std::cout << "usage: reg <a|b> <0..255>\n";
-            } else if (r == "a") {
-                cpu.a = static_cast<Byte>(value);
-            } else if (r == "b") {
-                cpu.b = static_cast<Byte>(value);
+            if (!(words >> r) || !(words >> v) || !parse_number(v, value) || value < 0) {
+                std::cout << "usage: reg <a|b|h|pc> <value>\n";
+            } else if (r == "a" || r == "b") {
+                if (value > 255) {
+                    std::cout << "A/B must be 0..255\n";
+                } else if (r == "a") {
+                    cpu.a = static_cast<Byte>(value);
+                } else {
+                    cpu.b = static_cast<Byte>(value);
+                }
+            } else if (r == "h") {
+                if (value > 65535) std::cout << "H must be 0..65535\n";
+                else cpu.h = static_cast<std::uint16_t>(value);
+            } else if (r == "pc") {
+                if (value > 65535) std::cout << "PC must be 0..65535\n";
+                else cpu.pc = static_cast<std::uint16_t>(value);
             } else {
                 std::cout << "unknown register: " << r << '\n';
             }
@@ -149,14 +160,22 @@ int main() {
         } else if (cmd == "step") {
             step(cpu);
             dump_regs(cpu);
+        } else if (cmd == "run") {
+            for (std::size_t i = 0; i < MEM_SIZE && !cpu.halted; ++i) {
+                step(cpu);
+            }
+            dump_regs(cpu);
         } else if (cmd == "alu") {
             std::string op, a, b;
             long left = 0, right = 0;
-            if (!(words >> op) || !(words >> a) || !parse_number(a, left) ||
-                !(words >> b) || !parse_number(b, right)) {
-                std::cout << "usage: alu <add|sub|and|or|xor|not|shl|shr> <a> <b>\n";
-            } else {
+            if (!(words >> op) || !(words >> a) || !parse_number(a, left) || left < 0 || left > 255) {
+                std::cout << "usage: alu <add|sub|and|or|xor|not|shl|shr> <a> [b]\n";
+            } else if (op == "not" || op == "shl" || op == "shr") {
+                print_alu_result(op, static_cast<Byte>(left), 0);
+            } else if (words >> b && parse_number(b, right) && right >= 0 && right <= 255) {
                 print_alu_result(op, static_cast<Byte>(left), static_cast<Byte>(right));
+            } else {
+                std::cout << "usage: alu <add|sub|and|or|xor> <a> <b>; unary: <not|shl|shr> <a>\n";
             }
         } else {
             std::cout << "unknown command: " << cmd << " (try `help`)\n";

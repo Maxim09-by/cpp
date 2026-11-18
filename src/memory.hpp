@@ -31,3 +31,11 @@ Byte mem_get(const Memory& mem, std::size_t addr);
 // повідомлення користувачу.
 // TODO(lab-01, M3): реалізувати в memory.cpp.
 bool mem_set(Memory& mem, std::size_t addr, Byte value);
+
+// Прочитати 16 біт, молодший байт перший.
+// TODO(lab-01, M3): реалізувати в memory.cpp.
+std::uint16_t mem_get16(const Memory& mem, std::size_t addr);
+
+// Записати 16 біт, молодший байт перший. Повертає false за межами MEM_SIZE.
+// TODO(lab-01, M3): реалізувати в memory.cpp.
+bool mem_set16(Memory& mem, std::size_t addr, std::uint16_t value);
